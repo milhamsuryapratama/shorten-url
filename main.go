@@ -66,9 +66,20 @@ func Short(writer http.ResponseWriter, request *http.Request) {
 	}
 }
 
+func Redirect(writer http.ResponseWriter, request *http.Request) {
+	vars := mux.Vars(request)
+	redirectURL, ok := mapShortenKey.Load(vars["key"])
+	if !ok {
+		redirectURL = "/"
+	}
+
+	http.Redirect(writer, request, redirectURL.(string), http.StatusMovedPermanently)
+}
+
 func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/short", Short).Methods(http.MethodPost)
+	r.HandleFunc("/short/{key}", Redirect).Methods(http.MethodGet)
 
 	err := http.ListenAndServe(":8000", r)
 	if err != nil {

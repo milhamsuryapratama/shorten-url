@@ -7,11 +7,39 @@ import (
 	"github.com/stretchr/testify/assert"
 	vegeta "github.com/tsenart/vegeta/lib"
 	"net/http"
+	"net/http/httputil"
 	"os"
 	"sync"
 	"testing"
 	"time"
 )
+
+func TestShortenURL(t *testing.T) {
+	client := &http.Client{}
+
+	shortURLRequest := ShortURLRequest{
+		TargetURL: "https://www.youtube.com",
+	}
+
+	shortURLRequestByte, _ := json.Marshal(shortURLRequest)
+
+	request, err := http.NewRequest("POST", "http://localhost:8000/short", bytes.NewBuffer(shortURLRequestByte))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	response, err := client.Do(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ko, _ := httputil.DumpResponse(response, true)
+	fmt.Println(string(ko))
+
+	defer response.Body.Close()
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+}
 
 func TestShortenURLWithGoroutine(t *testing.T) {
 	wg := &sync.WaitGroup{}
